@@ -16,6 +16,11 @@ class KeyPointClassifier(object):
         self.interpreter.allocate_tensors()
         self.input_details = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
+        self.gesture_labels = [
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+    'у', 'е', 'г', 'щ', 'ц', 'к', 'н', 'и', 'т', 'о', 'с', 'в', 'м', 'л', 'д', 'п', 'р', 'з', 'я', 'ч', 'й', 'ж'  # Ensure correct Russian letter encoding
+]
 
     def __call__(
         self,
