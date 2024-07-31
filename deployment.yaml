@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hand-gesture-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hand-gesture
+  template:
+    metadata:
+      labels:
+        app: hand-gesture
+    spec:
+      containers:
+      - name: hand-gesture
+        image: dibsnva/hand-gesture-recognition
+        ports:
+        - containerPort: 8000

@@ -1,0 +1,13 @@
+# .gcloudignore example
+
+# Ignore directories
+node_modules/
+venv/
+__pycache__/
+.DS_Store
+
+# Ignore specific file types
+*.pyc
+*.pyo
+*.log
+*.tmp
