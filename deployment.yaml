@@ -16,4 +16,4 @@ spec:
       - name: hand-gesture
         image: dibsnva/hand-gesture-recognition
         ports:
-        - containerPort: 8000
+        - containerPort: 8080
