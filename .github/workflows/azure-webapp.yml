@@ -3,7 +3,7 @@ name: Build and Deploy Flask App to Azure Web App
 on:
   push:
     branches:
-      - main  # Adjust the branch name if necessary
+      - main
 
 jobs:
   build-and-deploy:
@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.9'  # Adjust Python version if necessary
+        python-version: '3.9'
 
     - name: Install dependencies
       run: |
@@ -34,6 +34,6 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: shyraq  # Replace with your Web App name
+        app-name: shyraq
         slot-name: production
         package: ./app.zip
