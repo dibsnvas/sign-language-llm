@@ -16,6 +16,8 @@ app = Flask(__name__)
 
 # OpenCV video capture
 cap = cv.VideoCapture(0)
+app.config['DEBUG'] = True
+app.config['PROPAGATE_EXCEPTIONS'] = True
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
