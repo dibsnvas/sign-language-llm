@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -39,3 +43,4 @@ jobs:
 
       - name: Restart Azure Web App
         run: az webapp restart --resource-group Shyraqta_group --name shyraq
+    
