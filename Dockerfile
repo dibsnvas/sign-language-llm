@@ -1,3 +1,4 @@
+# Use the official Python image from the Docker Hub
 FROM python:3.10-slim
 
 # Install necessary dependencies
@@ -10,13 +11,15 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory
 WORKDIR /app
 
-# Copy all files to the working directory
-COPY . /app
+# Copy requirements.txt first to leverage Docker cache
+COPY requirements.txt /app/
 
 # Install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-RUN pip install gunicorn
+
+# Copy the rest of the application code
+COPY . /app
 
 # Expose port 8080 for Flask
 EXPOSE 8080
