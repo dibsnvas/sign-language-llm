@@ -32,7 +32,7 @@ jobs:
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/shyraq:${{ github.sha }} .
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/shyraq:${{ github.sha }}
 
-      - name: Login to Azure
+      - name: Log in to Azure
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -43,4 +43,3 @@ jobs:
 
       - name: Restart Azure Web App
         run: az webapp restart --resource-group Shyraqta_group --name shyraq
-    
