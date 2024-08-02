@@ -192,4 +192,4 @@ def draw_info_text(image, brect, handedness, hand_sign_text, finger_gesture_text
     return image
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8080)
