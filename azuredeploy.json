@@ -1,0 +1,31 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "version": {
+        "type": "string",
+        "allowedValues": [
+          "1.0",
+          "2.0",
+          "3.0"
+        ],
+        "defaultValue": "1.0",
+        "metadata": {
+          "description": "The version of the resource to deploy."
+        }
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Web/sites",
+        "apiVersion": "[parameters('version')]",
+        "name": "your-webapp-name",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'your-app-service-plan-name')]"
+        }
+      }
+    ],
+    "outputs": {}
+  }
+  
