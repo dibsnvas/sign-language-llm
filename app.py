@@ -2,6 +2,7 @@ import cv2 as cv
 from flask import Flask, render_template, Response, send_from_directory
 import copy
 from collections import deque, Counter
+from imutils.video import WebcamVideoStream
 import mediapipe as mp
 import csv
 import numpy as np
@@ -51,12 +52,13 @@ def favicon():
     return send_from_directory('', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 def generate_frames():
+    stream = WebcamVideoStream(src = 0).start()
     while True:
         ret, frame = cap.read()
         if not ret:
             print("Failed to capture frame")
             break
-
+        image = stream.read()
         frame = cv.flip(frame, 1)
         debug_image = copy.deepcopy(frame)
         image = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
