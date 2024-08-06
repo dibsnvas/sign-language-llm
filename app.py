@@ -7,16 +7,13 @@ import mediapipe as mp
 import csv
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-import itertools  # Import itertools here
+import itertools
 
 # Import the required models and utilities
 from model import KeyPointClassifier, PointHistoryClassifier
 from utils import CvFpsCalc
 
 app = Flask(__name__)
-
-# OpenCV video capture
-cap = cv.VideoCapture(0)
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
@@ -39,6 +36,9 @@ point_history = deque(maxlen=history_length)
 finger_gesture_history = deque(maxlen=history_length)
 cvFpsCalc = CvFpsCalc(buffer_len=10)
 
+# Start the video stream
+stream = WebcamVideoStream(src=0).start()
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -52,13 +52,11 @@ def favicon():
     return send_from_directory('', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 def generate_frames():
-    stream = WebcamVideoStream(src = 0).start()
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to capture frame")
-            break
-        image = stream.read()
+        frame = stream.read()
+        if frame is None:
+            continue
+
         frame = cv.flip(frame, 1)
         debug_image = copy.deepcopy(frame)
         image = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
