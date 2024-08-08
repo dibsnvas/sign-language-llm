@@ -8,8 +8,6 @@ import csv
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import itertools
-
-# Import the required models and utilities
 from model import KeyPointClassifier, PointHistoryClassifier
 from utils import CvFpsCalc
 
@@ -17,7 +15,12 @@ app = Flask(__name__)
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5, min_tracking_confidence=0.5)
+hands = mp_hands.Hands(
+    static_image_mode=False,
+    max_num_hands=2,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
 
 # Load the KeyPointClassifier and PointHistoryClassifier models
 keypoint_classifier = KeyPointClassifier()
@@ -30,7 +33,7 @@ with open('model/keypoint_classifier/keypoint_classifier_label.csv', encoding='u
 with open('model/point_history_classifier/point_history_classifier_label.csv', encoding='utf-8-sig') as f:
     point_history_classifier_labels = [row[0] for row in csv.reader(f)]
 
-# Other initializations
+# Initialize history containers and FPS calculator
 history_length = 16
 point_history = deque(maxlen=history_length)
 finger_gesture_history = deque(maxlen=history_length)
@@ -49,7 +52,7 @@ def video_feed():
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory('', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    return send_from_directory(app.root_path, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 def generate_frames():
     while True:
@@ -61,6 +64,7 @@ def generate_frames():
         debug_image = copy.deepcopy(frame)
         image = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
 
+        # Process the image to detect hands
         image.flags.writeable = False
         results = hands.process(image)
         image.flags.writeable = True
@@ -95,64 +99,46 @@ def generate_frames():
         else:
             point_history.append([0, 0])
 
-        # Encoding frame to JPEG
+        # Encode the frame and yield it
         ret, buffer = cv.imencode('.jpg', debug_image)
         if not ret:
             continue
-
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
-# Placeholder functions with actual implementation
+# Helper functions
 def calc_bounding_rect(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
-    landmark_array = np.empty((0, 2), int)
-    for _, landmark in enumerate(landmarks.landmark):
-        landmark_x = min(int(landmark.x * image_width), image_width - 1)
-        landmark_y = min(int(landmark.y * image_height), image_height - 1)
-        landmark_point = [np.array((landmark_x, landmark_y))]
-        landmark_array = np.append(landmark_array, landmark_point, axis=0)
+    landmark_array = np.array([[min(int(landmark.x * image_width), image_width - 1),
+                                min(int(landmark.y * image_height), image_height - 1)]
+                               for landmark in landmarks.landmark])
     x, y, w, h = cv.boundingRect(landmark_array)
     return [x, y, x + w, y + h]
 
 def calc_landmark_list(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
-    landmark_point = []
-    for _, landmark in enumerate(landmarks.landmark):
-        landmark_x = min(int(landmark.x * image_width), image_width - 1)
-        landmark_y = min(int(landmark.y * image_height), image_height - 1)
-        landmark_point.append([landmark_x, landmark_y])
-    return landmark_point
+    return [[min(int(landmark.x * image_width), image_width - 1),
+             min(int(landmark.y * image_height), image_height - 1)]
+            for landmark in landmarks.landmark]
 
 def pre_process_landmark(landmark_list):
     temp_landmark_list = copy.deepcopy(landmark_list)
-    base_x, base_y = 0, 0
-    for index, landmark_point in enumerate(temp_landmark_list):
-        if index == 0:
-            base_x, base_y = landmark_point[0], landmark_point[1]
-        temp_landmark_list[index][0] = temp_landmark_list[index][0] - base_x
-        temp_landmark_list[index][1] = temp_landmark_list[index][1] - base_y
+    base_x, base_y = temp_landmark_list[0]
+    temp_landmark_list = [[x - base_x, y - base_y] for x, y in temp_landmark_list]
     temp_landmark_list = list(itertools.chain.from_iterable(temp_landmark_list))
     max_value = max(list(map(abs, temp_landmark_list)))
-    def normalize_(n):
-        return n / max_value
-    temp_landmark_list = list(map(normalize_, temp_landmark_list))
+    if max_value > 0:
+        temp_landmark_list = [x / max_value for x in temp_landmark_list]
     return temp_landmark_list
 
 def pre_process_point_history(image, point_history):
-    image_width, image_height = image.shape[1], image.shape[0]
+    image_width = image.shape[1]
     temp_point_history = copy.deepcopy(point_history)
     temp_point_history = list(itertools.chain.from_iterable(temp_point_history))
-    max_value = image_width
-    def normalize_(n):
-        return n / max_value
-    temp_point_history = list(map(normalize_, temp_point_history))
-    return temp_point_history
+    return [x / image_width for x in temp_point_history]
 
 def logging_csv(number, mode, landmark_list, point_history_list):
-    if mode == 0:
-        pass
     if mode == 1 and (0 <= number <= 9):
         csv_path = 'model/keypoint_classifier/keypoint_classifier_label.csv'
         with open(csv_path, 'a', newline="") as f:
@@ -163,7 +149,6 @@ def logging_csv(number, mode, landmark_list, point_history_list):
         with open(csv_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *point_history_list])
-    return
 
 def draw_bounding_rect(is_brect, image, brect):
     if is_brect:
@@ -183,7 +168,7 @@ def draw_info_text(image, brect, handedness, hand_sign_text, finger_gesture_text
     font = ImageFont.truetype(font_path, 22)
     pil_image = Image.fromarray(cv.cvtColor(image, cv.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(pil_image)
-    info_text = handedness.classification[0].label[0:]
+    info_text = handedness.classification[0].label
     if hand_sign_text != "":
         info_text += ':' + hand_sign_text
     draw.text((brect[0] + 5, brect[1] - 22), info_text, font=font, fill=(255, 255, 255))
