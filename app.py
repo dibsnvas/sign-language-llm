@@ -95,8 +95,11 @@ def generate_frames():
         else:
             point_history.append([0, 0])
 
-        print("Frame processed")
+        # Encoding frame to JPEG
         ret, buffer = cv.imencode('.jpg', debug_image)
+        if not ret:
+            continue
+
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
